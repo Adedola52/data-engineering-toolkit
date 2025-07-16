@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import os 
 import requests 
-import logging  
+import logging
+from sqlalchemy import create_engine
 
 logging.basicConfig(filename='git.log',
     level=logging.INFO, 
@@ -78,10 +79,28 @@ def clean_data(get_data):
 
         except Exception as e:
             logging.error(f"Error occured: {e}")
-    
-    
 
-        
+
+def load_to_database(cleaned_data):
+
+    try:
+       DB_HOST = os.getenv("DB_HOST")
+       DB_NAME = os.getenv("DB_NAME")
+
+       engine = create_engine(f"mssql+pyodbc://{DB_HOST}/{DB_NAME}?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes")
+       cleaned_data.to_sql(name = "cleaned_data", con = engine, if_exists ='replace', index =False)
+
+
+    except Exception as e:
+        logging.error(f"Error occured with connecting to DB: {e}")
+
+
+    
+if __name__ == "__main__":
+    data = get_data("url")
+    cleandata = clean_data(data)
+    load_to_database(cleandata)
+
 
     
 
