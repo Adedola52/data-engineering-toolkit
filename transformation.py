@@ -24,13 +24,26 @@ def query_database():
         logging.error(f"Error reading data from database: {e}")
 
 
+
 def transform_data(df):
     transform = df
     transform["TransactionType"] = transform["Amount"].where(transform["Amount"]<0, "Debit", "Credit")
     transform["TransactionYear"] = transform["TransactionDate"].dt.year.astype("Int64")
-    transform["AmountCategory"] = np.where(transform["Amount"].between(-0, -500000), "Low Debit Transaction", 
-                                   transform["Amount"].between(-50001, -500000), "Medium Debit Transaction",
-                                   transform["Amount"].between(-500000, 0), "High Debit Transaction", )
+
+    conditions = [
+    transform["Amount"].between(-500000, -50001),
+    transform["Amount"].between(-50000, -1),
+    transform["Amount"].between(0, 50000),
+    transform["Amount"].between(50001, 500000)]
+    choices = [
+    "High Debit Transaction",
+    "Medium Debit Transaction",
+    "Low Credit Transaction",
+    "Medium Credit Transaction"
+]
+
+    transform["AmountCategory"] = np.select(conditions, choices, default="High Credit Transaction")
+
 
 
 
